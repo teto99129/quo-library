@@ -1,0 +1,10 @@
+services:
+  db:
+    image: postgres:alpine3.23
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: 'postgres'

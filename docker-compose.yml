@@ -1,0 +1,16 @@
+services:
+  quo-library:
+    build: 
+      context: .
+      dockerfile: ./Dockerfile
+    tty: true
+    working_dir: /app
+    volumes:
+      - ~/.config/nvim:/home/ubuntu/.config/nvim
+      - /opt/nvim-linux-x86_64:/opt/nvim-linux-x86_64
+      - ~/.local/share:/home/ubuntu/.local/share
+      - ~/.cache/nvim:/home/ubuntu/.cache/nvim
+      - .:/app
+      - ~/.gemini:/home/ubuntu/.gemini:ro
+      - ~/.local/bin:/home/ubuntu/.local/bin
+
