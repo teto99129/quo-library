@@ -3,6 +3,7 @@ package com.github.teto99129.library.book.service
 import com.github.teto99129.library.author.repository.AuthorRepository
 import com.github.teto99129.library.book.model.Book
 import com.github.teto99129.library.book.model.BookAuthors
+import com.github.teto99129.library.book.model.PatchBookRequest
 import com.github.teto99129.library.book.repository.BookRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +26,24 @@ class BookService(
 			authors = authors
 		)
 		val authorDetails = this.authorRepository.findAuthorsByIds(authors)
+		return book.copy(authors = authorDetails)
+	}
+
+	@Transactional
+	fun updateBook(bookId: Int, request: PatchBookRequest): Book {
+		val book = this.repository.updateBook(
+			bookId = bookId,
+			title = request.title,
+			value = request.value,
+			publicationStatus = request.publicationStatus
+		)
+
+		if (request.authors != null) {
+			this.repository.deleteBookAuthors(bookId)
+			this.repository.insertBookAuthors(bookId, request.authors)
+		}
+
+		val authorDetails = this.authorRepository.findAuthorsByBookId(bookId)
 		return book.copy(authors = authorDetails)
 	}
 

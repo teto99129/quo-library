@@ -7,6 +7,7 @@ import com.github.teto99129.library.jooq.tables.records.BooksRecord
 import com.github.teto99129.library.jooq.tables.references.BOOKS
 import com.github.teto99129.library.jooq.tables.references.BOOK_AUTHORS
 import org.jooq.DSLContext
+import org.jooq.Field
 import org.springframework.stereotype.Repository
 import java.time.OffsetDateTime
 
@@ -41,5 +42,36 @@ class JooqBookRepository(private val dsl: DSLContext): BookRepository {
 		dsl.batch(queries).execute()
 
 		return BookAuthors(bookId, authors)
+	}
+
+	override fun updateBook(bookId: Int, title: String?, value: Int?, publicationStatus: Short?): Book {
+		val updateValues = mutableMapOf<Field<*>, Any?>()
+		if (title != null) updateValues[BOOKS.TITLE] = title
+		if (value != null) updateValues[BOOKS.VALUE] = value
+		if (publicationStatus != null) updateValues[BOOKS.PUBLICATION_STATUS] = publicationStatus
+
+		if (updateValues.isEmpty()) {
+			throw IllegalArgumentException("At least one field must be provided for update")
+		}
+
+		val record = dsl.update(BOOKS)
+			.`set`(updateValues)
+			.where(BOOKS.BOOK_ID.eq(bookId))
+			.returning()
+			.fetchOne() ?: throw IllegalStateException("Failed to update book with ID: $bookId")
+
+		return Book(
+			bookID = record.bookId!!,
+			title = record.title!!,
+			value = record.value!!,
+			publicationStatus = record.publicationStatus!!,
+			createdAt = record.createdAt!!
+		)
+	}
+
+	override fun deleteBookAuthors(bookId: Int) {
+		dsl.deleteFrom(BOOK_AUTHORS)
+			.where(BOOK_AUTHORS.BOOK_ID.eq(bookId))
+			.execute()
 	}
 }
