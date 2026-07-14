@@ -1,7 +1,6 @@
 package com.github.teto99129.library.book.controller
 
 import com.github.teto99129.library.book.model.BookResponse
-import com.github.teto99129.library.book.model.GetBookRequest
 import com.github.teto99129.library.book.model.PatchBookRequest
 import com.github.teto99129.library.book.model.PostBookRequest
 import com.github.teto99129.library.book.service.BookService

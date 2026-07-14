@@ -18,20 +18,17 @@ import java.time.OffsetDateTime
 
 @Repository
 class JooqBookRepository(private val dsl: DSLContext): BookRepository {
-	override fun insertBook(title: String, value: Int, publicationStatus: Short): Book {
+	override fun insertBook(title: String, value: Int, publicationStatus: Short, authors: List<Int>): Book {
 		val record: BooksRecord =  dsl.insertInto(BOOKS)
 			.columns(BOOKS.TITLE, BOOKS.VALUE, BOOKS.PUBLICATION_STATUS, BOOKS.CREATED_AT)
 			.values(title, value, publicationStatus, OffsetDateTime.now())
 			.returning()
 			.fetchOne() ?: throw IllegalStateException("Failed to insert book")
 
-		return Book(
-			bookID = record.bookId!!,
-			title = record.title!!,
-			value = record.value!!,
-			publicationStatus = record.publicationStatus!!,
-			createdAt = record.createdAt!!
-		)
+		val bookId = record.bookId!!
+		insertBookAuthors(bookId, authors)
+
+		return getBookById(bookId) ?: throw IllegalStateException("Failed to fetch inserted book with ID: $bookId")
 	}
 
 	override fun insertBookAuthors(bookId: Int, authors: List<Int>): BookAuthors {
@@ -49,29 +46,25 @@ class JooqBookRepository(private val dsl: DSLContext): BookRepository {
 		return BookAuthors(bookId, authors)
 	}
 
-	override fun updateBook(bookId: Int, title: String?, value: Int?, publicationStatus: Short?): Book {
+	override fun updateBook(bookId: Int, title: String?, value: Int?, publicationStatus: Short?, authors: List<Int>?): Book {
 		val updateValues = mutableMapOf<Field<*>, Any?>()
 		if (title != null) updateValues[BOOKS.TITLE] = title
 		if (value != null) updateValues[BOOKS.VALUE] = value
 		if (publicationStatus != null) updateValues[BOOKS.PUBLICATION_STATUS] = publicationStatus
 
-		if (updateValues.isEmpty()) {
-			throw IllegalArgumentException("At least one field must be provided for update")
+		if (updateValues.isNotEmpty()) {
+			dsl.update(BOOKS)
+				.`set`(updateValues)
+				.where(BOOKS.BOOK_ID.eq(bookId))
+				.execute()
 		}
 
-		val record = dsl.update(BOOKS)
-			.`set`(updateValues)
-			.where(BOOKS.BOOK_ID.eq(bookId))
-			.returning()
-			.fetchOne() ?: throw IllegalStateException("Failed to update book with ID: $bookId")
+		if (authors != null) {
+			deleteBookAuthors(bookId)
+			insertBookAuthors(bookId, authors)
+		}
 
-		return Book(
-			bookID = record.bookId!!,
-			title = record.title!!,
-			value = record.value!!,
-			publicationStatus = record.publicationStatus!!,
-			createdAt = record.createdAt!!
-		)
+		return getBookById(bookId) ?: throw IllegalStateException("Failed to fetch updated book with ID: $bookId")
 	}
 
 	override fun deleteBookAuthors(bookId: Int) {
@@ -120,6 +113,44 @@ class JooqBookRepository(private val dsl: DSLContext): BookRepository {
 		.from(BOOKS)
 		.where(authCondition)
 		.fetch { record ->
+			Book(
+				bookID = record.get(BOOKS.BOOK_ID)!!,
+				title = record.get(BOOKS.TITLE)!!,
+				value = record.get(BOOKS.VALUE)!!,
+				publicationStatus = record.get(BOOKS.PUBLICATION_STATUS)!!,
+				createdAt = record.get(BOOKS.CREATED_AT)!!,
+				authors = record.get(authorsField) ?: emptyList()
+			)
+		}
+	}
+
+	private fun getBookById(bookId: Int): Book? {
+		val authorsField = multiset(
+			select(AUTHORS.AUTHOR_ID, AUTHORS.NAME, AUTHORS.BIRTHDAY)
+				.from(AUTHORS)
+				.join(BOOK_AUTHORS).on(AUTHORS.AUTHOR_ID.eq(BOOK_AUTHORS.AUTHOR_ID))
+				.where(BOOK_AUTHORS.BOOK_ID.eq(BOOKS.BOOK_ID))
+		).convertFrom { r ->
+			r.map { record ->
+				Author(
+					authorId = record.get(AUTHORS.AUTHOR_ID)!!,
+					name = record.get(AUTHORS.NAME)!!,
+					birthday = record.get(AUTHORS.BIRTHDAY)!!
+				)
+			}
+		}.`as`("authors")
+
+		return dsl.select(
+			BOOKS.BOOK_ID,
+			BOOKS.TITLE,
+			BOOKS.VALUE,
+			BOOKS.PUBLICATION_STATUS,
+			BOOKS.CREATED_AT,
+			authorsField
+		)
+		.from(BOOKS)
+		.where(BOOKS.BOOK_ID.eq(bookId))
+		.fetchOne { record ->
 			Book(
 				bookID = record.get(BOOKS.BOOK_ID)!!,
 				title = record.get(BOOKS.TITLE)!!,
