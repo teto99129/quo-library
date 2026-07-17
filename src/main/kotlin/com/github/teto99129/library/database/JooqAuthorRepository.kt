@@ -17,21 +17,20 @@ class JooqAuthorRepository(
 	override fun insertAuthor(
 		name: String,
 		birthday: LocalDate,
-	): Author {
-		val record: AuthorsRecord =
-			dsl
-				.insertInto(AUTHORS)
-				.columns(AUTHORS.NAME, AUTHORS.BIRTHDAY)
-				.values(name, birthday)
-				.returning()
-				.fetchOne() ?: error("Failed to insert author")
-
-		return Author(
-			authorId = record.authorId!!,
-			name = record.name!!,
-			birthday = record.birthday!!,
-		)
-	}
+	): Author =
+		dsl
+			.insertInto(AUTHORS)
+			.columns(AUTHORS.NAME, AUTHORS.BIRTHDAY)
+			.values(name, birthday)
+			.returning()
+			.fetchOne()
+			?.let { record ->
+				Author(
+					authorId = record.authorId!!,
+					name = record.name!!,
+					birthday = record.birthday!!,
+				)
+			} ?: error("Failed to insert author")
 
 	override fun findAuthorsByIds(ids: List<Int>): List<Author> {
 		if (ids.isEmpty()) {
@@ -74,24 +73,29 @@ class JooqAuthorRepository(
 		if (name != null) updateValues[AUTHORS.NAME] = name
 		if (birthday != null) updateValues[AUTHORS.BIRTHDAY] = birthday
 
-		val record =
-			if (updateValues.isNotEmpty()) {
-				dsl
-					.update(AUTHORS)
-					.set(updateValues)
-					.where(AUTHORS.AUTHOR_ID.eq(authorId))
-					.returning()
-					.fetchOne() ?: error("Failed to update author with ID: $authorId")
-			} else {
-				dsl
-					.selectFrom(AUTHORS)
-					.where(AUTHORS.AUTHOR_ID.eq(authorId))
-					.fetchOne() ?: error("Author not found with ID: $authorId")
-			}
+		val record = fetchRecord(authorId, updateValues)
 		return Author(
 			authorId = record.authorId!!,
 			name = record.name!!,
 			birthday = record.birthday!!,
 		)
+	}
+
+	private fun fetchRecord(
+		authorId: Int,
+		updateValues: Map<Field<*>, Any?>,
+	): AuthorsRecord {
+		if (updateValues.isNotEmpty()) {
+			return dsl
+				.update(AUTHORS)
+				.set(updateValues)
+				.where(AUTHORS.AUTHOR_ID.eq(authorId))
+				.returning()
+				.fetchOne() ?: error("Failed to update author with ID: $authorId")
+		}
+		return dsl
+			.selectFrom(AUTHORS)
+			.where(AUTHORS.AUTHOR_ID.eq(authorId))
+			.fetchOne() ?: error("Author not found with ID: $authorId")
 	}
 }

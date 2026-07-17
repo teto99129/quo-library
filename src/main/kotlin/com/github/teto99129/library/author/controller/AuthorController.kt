@@ -4,6 +4,7 @@ import com.github.teto99129.library.author.model.AuthorResponse
 import com.github.teto99129.library.author.model.PatchAuthorRequest
 import com.github.teto99129.library.author.model.PostAuthorRequest
 import com.github.teto99129.library.author.service.AuthorService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,7 +17,8 @@ class AuthorController(
 ) {
 	@PostMapping("/author")
 	fun registerAuthor(
-		@RequestBody body: PostAuthorRequest,
+		@RequestBody
+		@Valid body: PostAuthorRequest,
 	): AuthorResponse {
 		val author = this.service.registerAuthor(body.name, body.birthday)
 		return AuthorResponse(
@@ -29,7 +31,8 @@ class AuthorController(
 	@PatchMapping("/author/{authorId}")
 	fun updateAuthor(
 		@PathVariable authorId: Int,
-		@RequestBody body: PatchAuthorRequest,
+		@RequestBody
+		@Valid body: PatchAuthorRequest,
 	): AuthorResponse {
 		val author = this.service.updateAuthor(authorId, body.name, body.birthday)
 		return AuthorResponse(
