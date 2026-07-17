@@ -21,4 +21,8 @@ class GlobalExceptionHandler {
 	@ExceptionHandler(ResourceNotFoundException::class)
 	fun handleResourceNotFoundException(ex: ResourceNotFoundException): ResponseEntity<Map<String, String?>> =
 		ResponseEntity(mapOf("error" to ex.message), HttpStatus.NOT_FOUND)
+
+	@ExceptionHandler(IllegalArgumentException::class)
+	fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<Map<String, String?>> =
+		ResponseEntity(mapOf("error" to ex.message), HttpStatus.BAD_REQUEST)
 }

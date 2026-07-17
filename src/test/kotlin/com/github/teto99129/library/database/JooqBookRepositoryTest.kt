@@ -1,6 +1,8 @@
 package com.github.teto99129.library.database
 
 import com.github.teto99129.library.book.model.PublicationStatus
+import com.github.teto99129.library.common.exception.ResourceNotFoundException
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldContainExactly
@@ -74,6 +76,13 @@ class JooqBookRepositoryTest(
 				updated.value shouldBe original.value
 				updated.publicationStatus shouldBe original.publicationStatus
 				updated.authors[0].authorId shouldBe author.authorId
+			}
+
+			it("異常 - 存在しないIDを指定して更新しようとした場合は例外が発生すること") {
+				val nonExistentId = -9999
+				shouldThrow<ResourceNotFoundException> {
+					bookRepository.updateBook(nonExistentId, "新タイトル", null, null, null)
+				}
 			}
 		}
 
