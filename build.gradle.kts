@@ -5,16 +5,16 @@ buildscript {
 	}
 	dependencies {
 		classpath("org.postgresql:postgresql:42.7.3")
-		classpath("org.flywaydb:flyway-database-postgresql:10.15.2")
+		classpath("org.flywaydb:flyway-database-postgresql:12.11.0")
 	}
 }
 
 plugins {
-	kotlin("jvm") version "2.0.21"
-	kotlin("plugin.spring") version "2.0.21"
+	kotlin("jvm") version "2.3.21"
+	kotlin("plugin.spring") version "2.3.21"
 	id("org.springframework.boot") version "4.1.0"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("org.flywaydb.flyway") version "11.19.1"
+	id("org.flywaydb.flyway") version "12.11.0"
 	id("org.jooq.jooq-codegen-gradle") version "3.21.6"
 	id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
 	id("io.gitlab.arturbosch.detekt") version "1.23.8"
@@ -42,8 +42,14 @@ dependencies {
 	implementation("tools.jackson.module:jackson-module-kotlin:3.2.0")
 	runtimeOnly("org.postgresql:postgresql")
 	runtimeOnly("org.flywaydb:flyway-database-postgresql")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-jooq-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+	testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+	testImplementation("io.kotest.extensions:kotest-extensions-spring:1.3.0")
+	testImplementation("io.mockk:mockk:1.13.12")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	jooqCodegen("org.postgresql:postgresql:42.7.13")
 }
@@ -61,6 +67,10 @@ kotlin {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.named("jooqCodegen") {
+	dependsOn("flywayMigrate")
 }
 
 tasks.named("compileKotlin") {
@@ -111,4 +121,20 @@ detekt {
 	toolVersion = "1.23.8"
 	buildUponDefaultConfig = true
 	source.setFrom(files("src/main/kotlin", "src/test/kotlin"))
+}
+
+configurations.matching { it.name.startsWith("detekt") }.configureEach {
+	resolutionStrategy.eachDependency {
+		if (requested.group == "org.jetbrains.kotlin") {
+			useVersion("2.0.21")
+		}
+	}
+}
+
+tasks.named("runKtlintCheckOverMainSourceSet") {
+	dependsOn("jooqCodegen")
+}
+
+tasks.named("runKtlintFormatOverMainSourceSet") {
+	dependsOn("jooqCodegen")
 }
