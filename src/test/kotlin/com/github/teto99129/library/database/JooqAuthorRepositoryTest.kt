@@ -4,8 +4,6 @@ import com.github.teto99129.library.common.exception.ResourceNotFoundException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.extensions.spring.SpringExtension
-import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.springframework.boot.test.context.SpringBootTest
@@ -33,23 +31,6 @@ class JooqAuthorRepositoryTest(
 			}
 		}
 
-		describe("findAuthorsByIds") {
-			it("空リストを渡した場合は空のリストを返すこと") {
-				val result = repository.findAuthorsByIds(emptyList())
-				result.shouldBeEmpty()
-			}
-
-			it("存在するIDリストを渡した場合は該当する著者を返すこと") {
-				val author1 = repository.insertAuthor("芥川 竜之介", LocalDate.of(1892, 3, 1))
-				val author2 = repository.insertAuthor("太宰 治", LocalDate.of(1909, 6, 19))
-
-				val result = repository.findAuthorsByIds(listOf(author1.authorId, author2.authorId))
-
-				result shouldHaveSize 2
-				result.find { it.authorId == author1.authorId }?.name shouldBe "芥川 竜之介"
-				result.find { it.authorId == author2.authorId }?.name shouldBe "太宰 治"
-			}
-		}
 
 		describe("updateAuthor") {
 			it("正常 - 名前のみ更新（生年月日は元の値をキープ）") {

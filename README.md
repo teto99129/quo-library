@@ -57,7 +57,7 @@ docker compose up -d
 ### 2. アプリケーションのビルドと起動（コンテナ内）
 コンテナ内で起動します。
 ```bash
-docker compose exec quo-library ./gradlew bootRun
+docker compose exec api ./gradlew bootRun
 ```
 
 ---
@@ -69,23 +69,23 @@ docker compose exec quo-library ./gradlew bootRun
 ### 1. 全テストの実行
 Controller（Web）、Service（単体）、Repository（統合）のすべてのテストを実行します。
 ```bash
-docker compose exec quo-library ./gradlew test
+docker compose exec api ./gradlew test
 ```
 
 ### 2. コードフォーマットのチェックと自動整形 (KtLint)
 プロジェクト規約（Kotlin公式に準拠した4インデント幅）に従って、ソースコードのスタイルチェックと自動整形を行います。
 ```bash
 # スタイルの自動修正
-docker compose exec quo-library ./gradlew ktlintFormat
+docker compose exec api ./gradlew ktlintFormat
 
 # スタイルのチェックのみ
-docker compose exec quo-library ./gradlew ktlintCheck
+docker compose exec api ./gradlew ktlintCheck
 ```
 
 ### 3. 静的解析の実行 (Detekt)
 コードの品質（複雑度や潜在的なバグなど）の解析を実行します。
 ```bash
-docker compose exec quo-library ./gradlew detekt
+docker compose exec api ./gradlew detekt
 ```
 
 ---

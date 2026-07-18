@@ -1,5 +1,5 @@
 services:
-  quo-library:
+  api:
     build: 
       context: .
       dockerfile: ./Dockerfile
