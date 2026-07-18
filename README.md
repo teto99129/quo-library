@@ -1,4 +1,4 @@
-# quo-library
+# library-api
 
 Spring Boot、Kotlin、および jOOQ を使用した図書管理（著者・書籍）アプリケーションのバックエンド API です。
 
